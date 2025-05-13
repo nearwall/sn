@@ -10,6 +10,7 @@ import (
 	"context"
 	"github.com/urfave/cli/v3"
 	"sn/api"
+	"sn/api/rest"
 	"sn/api/rest/handlers"
 	"sn/internal/repository/user"
 	"sn/internal/service"
@@ -23,13 +24,13 @@ func InitializeApplication(c *cli.Command, appCtx context.Context) (api.Containe
 		return api.Container{}, err
 	}
 	userStore := repository.NewStore(client)
-	userService := service.NewService(userStore)
+	userService := service.NewUserService(userStore)
 	resolver := handlers.NewResolver(userService)
 	serverConfig, err := provideRestServerConfig(appCtx, c)
 	if err != nil {
 		return api.Container{}, err
 	}
-	server := handlers.NewServer(resolver, serverConfig)
+	server := rest.NewServer(resolver, serverConfig)
 	container := api.NewContainer(client, server)
 	return container, nil
 }

@@ -2,6 +2,7 @@ package inject
 
 import (
 	"context"
+	"encoding/hex"
 
 	"sn/internal/infra/postgres"
 	repository "sn/internal/repository/user"
@@ -14,7 +15,9 @@ import (
 // wire Set for loading the services.
 var serviceSet = wire.NewSet( // nolint
 	providePostgresClient,
-	service.NewService,
+	service.NewUserService,
+	provideJWTServiceConfig,
+	service.NewJWTService,
 	repository.NewStore,
 )
 
@@ -29,4 +32,12 @@ func providePostgresClient(ctx context.Context, cmd *cli.Command) (*postgres.Cli
 		MaxOpenConns: 3,
 		MaxIdleConns: 1,
 	})
+}
+
+func provideJWTServiceConfig(ctx context.Context, cmd *cli.Command) (service.TokenServiceConfig, error) {
+	key, err := hex.DecodeString(cmd.String("jwt-key"))
+
+	return service.TokenServiceConfig{
+		Key: key,
+	}, err
 }

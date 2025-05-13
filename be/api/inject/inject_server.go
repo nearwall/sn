@@ -3,21 +3,24 @@ package inject
 import (
 	"context"
 
+	"sn/api/rest"
 	"sn/api/rest/handlers"
+	"sn/api/rest/middleware"
 
 	"github.com/google/wire"
 	"github.com/urfave/cli/v3"
 )
 
 // wire Set for loading the server.
-var serverSet = wire.NewSet( //nolint
+var serverSet = wire.NewSet(
 	handlers.NewResolver,
-	handlers.NewServer,
+	rest.NewServer,
+	middleware.NewBearerTokenAuth,
 	provideRestServerConfig,
 )
 
-func provideRestServerConfig(ctx context.Context, cmd *cli.Command) (handlers.ServerConfig, error) {
-	return handlers.ServerConfig{
+func provideRestServerConfig(ctx context.Context, cmd *cli.Command) (rest.ServerConfig, error) {
+	return rest.ServerConfig{
 		Addr: cmd.String("addr"),
 	}, nil
 }

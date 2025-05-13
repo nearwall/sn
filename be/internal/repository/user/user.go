@@ -20,11 +20,11 @@ func NewStore(postgresClient *postgres.Client) core.UserStore {
 }
 
 // core.UserStore interface
-func (s *store) Create(ctx context.Context, user_id uuid.UUID) error {
+func (s *store) Create(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
 // core.UserStore interface
-func (s *store) ReadInfo(ctx context.Context, user_id uuid.UUID) (*core.UserInfo, error) {
+func (s *store) ReadInfo(ctx context.Context, userID uuid.UUID) (*core.UserInfo, error) {
 	return &core.UserInfo{}, nil
 }

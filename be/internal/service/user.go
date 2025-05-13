@@ -7,26 +7,26 @@ import (
 	"github.com/google/uuid"
 )
 
-type service struct {
+type userService struct {
 	storage core.UserStore
 }
 
-func NewService(storage core.UserStore) core.UserService {
-	return &service{
+func NewUserService(storage core.UserStore) core.UserService {
+	return &userService{
 		storage: storage,
 	}
 }
 
-func (s *service) Register(ctx context.Context) (uuid.UUID, error) {
+func (s *userService) Register(ctx context.Context) (uuid.UUID, error) {
 	// generate random ID (UUID v4)
-	user_id := uuid.New()
-	if err := s.storage.Create(ctx, user_id); err != nil {
+	userID := uuid.New()
+	if err := s.storage.Create(ctx, userID); err != nil {
 		return uuid.UUID{}, err
 	}
 
-	return user_id, nil
+	return userID, nil
 }
 
-func (s *service) GetInfo(ctx context.Context, user_id uuid.UUID) (*core.UserInfo, error) {
-	return s.storage.ReadInfo(ctx, user_id)
+func (s *userService) GetInfo(ctx context.Context, userID uuid.UUID) (*core.UserInfo, error) {
+	return s.storage.ReadInfo(ctx, userID)
 }

@@ -1,19 +1,19 @@
 package api
 
 import (
-	"sn/api/rest/handlers"
+	"sn/api/rest"
 	"sn/internal/infra/postgres"
 )
 
 type Container struct {
 	PostgresClient *postgres.Client
-	RestServer     handlers.Server
+	RestServer     rest.Server
 }
 
-// NewContainer: Create a new application struct
+// NewContainer creates a new application struct
 func NewContainer(
 	postgresClient *postgres.Client,
-	server handlers.Server,
+	server rest.Server,
 ) Container {
 	return Container{
 		PostgresClient: postgresClient,
