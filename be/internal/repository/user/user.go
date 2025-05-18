@@ -9,22 +9,22 @@ import (
 	"github.com/google/uuid"
 )
 
-type store struct {
+type userStore struct {
 	client *postgres.Client
 }
 
-func NewStore(postgresClient *postgres.Client) core.UserStore {
-	return &store{
+func NewUserStore(postgresClient *postgres.Client) core.UserStore {
+	return &userStore{
 		client: postgresClient,
 	}
 }
 
 // core.UserStore interface
-func (s *store) Create(ctx context.Context, userID uuid.UUID) error {
+func (s *userStore) Create(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
 // core.UserStore interface
-func (s *store) ReadInfo(ctx context.Context, userID uuid.UUID) (*core.UserInfo, error) {
-	return &core.UserInfo{}, nil
+func (s *userStore) ReadInfo(ctx context.Context, userID uuid.UUID) (core.UserInfo, error) {
+	return core.UserInfo{}, nil
 }

@@ -17,16 +17,20 @@ func NewUserService(storage core.UserStore) core.UserService {
 	}
 }
 
-func (s *userService) Register(ctx context.Context) (uuid.UUID, error) {
+// core.UserService interface
+func (s *userService) Register(ctx context.Context, data core.RegistrationData) (core.RegistrationOk, error) {
 	// generate random ID (UUID v4)
 	userID := uuid.New()
 	if err := s.storage.Create(ctx, userID); err != nil {
-		return uuid.UUID{}, err
+		return core.RegistrationOk{}, err
 	}
 
-	return userID, nil
+	return core.RegistrationOk{
+		UserID: userID,
+	}, nil
 }
 
-func (s *userService) GetInfo(ctx context.Context, userID uuid.UUID) (*core.UserInfo, error) {
+// core.UserService interface
+func (s *userService) GetInfo(ctx context.Context, userID uuid.UUID) (core.UserInfo, error) {
 	return s.storage.ReadInfo(ctx, userID)
 }

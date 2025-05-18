@@ -8,12 +8,21 @@ import (
 )
 
 type UserService interface {
-	Register(ctx context.Context) (uuid.UUID, error)
+	Register(ctx context.Context, data RegistrationData) (RegistrationOk, error)
 
-	GetInfo(ctx context.Context, userID uuid.UUID) (*UserInfo, error)
+	GetInfo(ctx context.Context, userID uuid.UUID) (UserInfo, error)
 }
 
 type (
+	RegistrationData struct {
+		UserInfo
+		Password string
+	}
+
+	RegistrationOk struct {
+		UserID uuid.UUID
+	}
+
 	UserInfo struct {
 		FirstName  string
 		SecondName string
@@ -26,5 +35,5 @@ type (
 type UserStore interface {
 	Create(ctx context.Context, userID uuid.UUID) error
 
-	ReadInfo(ctx context.Context, userID uuid.UUID) (*UserInfo, error)
+	ReadInfo(ctx context.Context, userID uuid.UUID) (UserInfo, error)
 }

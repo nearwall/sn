@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 
+	"sn/internal/core"
 	"sn/internal/infra/postgres"
 	repository "sn/internal/repository/user"
 	"sn/internal/service"
@@ -18,7 +19,10 @@ var serviceSet = wire.NewSet( // nolint
 	service.NewUserService,
 	provideJWTServiceConfig,
 	service.NewJWTService,
-	repository.NewStore,
+	repository.NewUserStore,
+	service.NewAuthService,
+	providePasswordServiceConfig,
+	service.NewPasswordService,
 )
 
 func providePostgresClient(ctx context.Context, cmd *cli.Command) (*postgres.Client, error) {
@@ -40,4 +44,12 @@ func provideJWTServiceConfig(ctx context.Context, cmd *cli.Command) (service.Tok
 	return service.TokenServiceConfig{
 		Key: key,
 	}, err
+}
+
+func providePasswordServiceConfig(_ctx context.Context, _cmd *cli.Command) (service.PasswordServiceConfig, error) {
+	return service.PasswordServiceConfig{
+		HashPepper: "",
+		// FixMe: add cli flag
+		HashAlgorithm: core.DebugBytesSum,
+	}, nil
 }

@@ -10,7 +10,7 @@ import (
 //
 // GET /dialog/{user_id}/list
 func (r *Resolver) DialogUserIDListGet(ctx context.Context, params api.DialogUserIDListGetParams) (api.DialogUserIDListGetRes, error) {
-	return nil, nil
+	return &api.DialogUserIDListGetServiceUnavailable{}, nil
 }
 
 // DialogUserIDSendPost implements POST /dialog/{user_id}/send operation.
@@ -20,5 +20,5 @@ func (r *Resolver) DialogUserIDSendPost(
 	ctx context.Context,
 	req api.OptDialogUserIDSendPostReq,
 	params api.DialogUserIDSendPostParams) (api.DialogUserIDSendPostRes, error) {
-	return nil, nil
+	return &api.DialogUserIDSendPostServiceUnavailable{}, nil
 }

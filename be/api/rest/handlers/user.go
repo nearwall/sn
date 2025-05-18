@@ -42,7 +42,7 @@ func (r *Resolver) UserGetIDGet(ctx context.Context, params api.UserGetIDGetPara
 		return &api.UserGetIDGetNotFound{}, nil
 	}
 
-	return schemes.ConvertToUserInfo(userID, info), nil
+	return schemes.FromGetUserInfoOk(userID, info), nil
 }
 
 // UserRegisterPost implements POST /user/register operation.

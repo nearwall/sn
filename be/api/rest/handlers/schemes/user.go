@@ -7,7 +7,21 @@ import (
 	"github.com/google/uuid"
 )
 
-func ConvertToUserInfo(userID uuid.UUID, info *core.UserInfo) api.UserGetIDGetRes {
+func ToCoreRegistration(req api.OptUserRegisterPostReq) (core.RegistrationData, error) {
+	return core.RegistrationData{}, nil
+}
+
+func FromRegistrationOk(data core.RegistrationOk) api.UserRegisterPostRes {
+	return &api.UserRegisterPostOK{
+		UserID: api.NewOptString(data.UserID.String()),
+	}
+}
+
+func FromRegistrationErr(er error) api.UserRegisterPostRes {
+	return &api.UserRegisterPostInternalServerError{}
+}
+
+func FromGetUserInfoOk(userID uuid.UUID, info core.UserInfo) api.UserGetIDGetRes {
 	return &api.User{
 		ID:         api.NewOptUserId(api.UserId(userID.String())),
 		FirstName:  api.NewOptString(info.FirstName),
@@ -15,11 +29,5 @@ func ConvertToUserInfo(userID uuid.UUID, info *core.UserInfo) api.UserGetIDGetRe
 		Biography:  api.NewOptString(info.Biography),
 		Birthdate:  api.NewOptBirthDate(api.BirthDate(info.Birthdate)),
 		City:       api.NewOptString(info.City),
-	}
-}
-
-func ConvertToCreatedUserID(userID uuid.UUID) api.UserRegisterPostRes {
-	return &api.UserRegisterPostOK{
-		UserID: api.NewOptString(userID.String()),
 	}
 }

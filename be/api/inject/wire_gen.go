@@ -23,9 +23,15 @@ func InitializeApplication(c *cli.Command, appCtx context.Context) (api.Containe
 	if err != nil {
 		return api.Container{}, err
 	}
-	userStore := repository.NewStore(client)
+	userStore := repository.NewUserStore(client)
 	userService := service.NewUserService(userStore)
-	resolver := handlers.NewResolver(userService)
+	passwordServiceConfig, err := providePasswordServiceConfig(appCtx, c)
+	if err != nil {
+		return api.Container{}, err
+	}
+	passwordService := service.NewPasswordService(passwordServiceConfig)
+	authService := service.NewAuthService(userStore, passwordService)
+	resolver := handlers.NewResolver(userService, authService)
 	serverConfig, err := provideRestServerConfig(appCtx, c)
 	if err != nil {
 		return api.Container{}, err

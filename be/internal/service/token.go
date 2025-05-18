@@ -61,7 +61,7 @@ func (s *tokenService) Verify(raw string) (core.JwtInfo, error) {
 	return core.JwtInfo{}, nil
 }
 
-// core.JwtService  interface implementation
+// core.JwtService interface
 func (s *tokenService) Create(info core.JwtInfo) (string, error) {
 	claims := jwtClaims{
 		jwt.RegisteredClaims{
