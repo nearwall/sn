@@ -3,10 +3,12 @@ package inject
 import (
 	"context"
 	"encoding/hex"
+	"time"
 
 	"sn/internal/core"
 	"sn/internal/infra/postgres"
-	repository "sn/internal/repository/user"
+	acc_stg "sn/internal/repository/account"
+	info_stg "sn/internal/repository/info"
 	"sn/internal/service"
 
 	"github.com/google/wire"
@@ -16,13 +18,16 @@ import (
 // wire Set for loading the services.
 var serviceSet = wire.NewSet( // nolint
 	providePostgresClient,
-	service.NewUserService,
+	service.NewAccountService,
 	provideJWTServiceConfig,
-	service.NewJWTService,
-	repository.NewUserStore,
+	service.NewTokenService,
+	info_stg.NewInfoStore,
+	acc_stg.NewAccountStore,
 	service.NewAuthService,
 	providePasswordServiceConfig,
 	service.NewPasswordService,
+	provideSessionServiceConfig,
+	service.NewSessionService,
 )
 
 func providePostgresClient(ctx context.Context, cmd *cli.Command) (*postgres.Client, error) {
@@ -50,6 +55,13 @@ func providePasswordServiceConfig(_ctx context.Context, _cmd *cli.Command) (serv
 	return service.PasswordServiceConfig{
 		HashPepper: "",
 		// FixMe: add cli flag
-		HashAlgorithm: core.DebugBytesSum,
+		HashAlgorithm: core.HashAlgoDebugBytesSum,
+	}, nil
+}
+
+func provideSessionServiceConfig(_ctx context.Context, _cmd *cli.Command) (service.SessionServiceConfig, error) {
+	// FixMe: add cli flag
+	return service.SessionServiceConfig{
+		SessionDuration: 32 * time.Hour,
 	}, nil
 }

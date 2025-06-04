@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 )
@@ -15,6 +16,10 @@ type (
 	PasswordLoginOk struct {
 		AccessToken string
 	}
+)
+
+var (
+	ErrLoginCreds = errors.New("no such account or wrong password")
 )
 
 type AuthService interface {

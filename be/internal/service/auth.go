@@ -2,21 +2,48 @@ package service
 
 import (
 	"context"
+	"errors"
+
 	"sn/internal/core"
 )
 
 type authService struct {
-	storage  core.UserStore
 	password core.PasswordService
+	session  core.SessionService
+	userStg  core.InfoStore
+	accStg   core.AccountStore
 }
 
-func NewAuthService(storage core.UserStore, password core.PasswordService) core.AuthService {
+func NewAuthService(
+	storage core.InfoStore,
+	accStg core.AccountStore,
+	password core.PasswordService,
+	session core.SessionService) core.AuthService {
+
 	return &authService{
-		storage: storage,
+		userStg:  storage,
+		accStg:   accStg,
+		password: password,
+		session:  session,
 	}
 }
 
 // impl core.AuthService interface
-func (s *authService) LoginWithPassword(ctx context.Context, data core.PasswordLoginData) (core.PasswordLoginOk, error) {
-	return core.PasswordLoginOk{}, nil
+func (a *authService) LoginWithPassword(ctx context.Context, data core.PasswordLoginData) (core.PasswordLoginOk, error) {
+	pwdInfo, err := a.accStg.ReadPasswordInfo(ctx, data.UserID)
+	if err != nil {
+		return core.PasswordLoginOk{}, err
+	}
+
+	if isCorrect, err := a.password.Verify(ctx, data.Password, pwdInfo.Password); err != nil {
+		return core.PasswordLoginOk{}, err
+	} else if !isCorrect {
+		return core.PasswordLoginOk{}, errors.New("Wrong password")
+	}
+
+	if data, err := a.session.Open(ctx, data.UserID); err != nil {
+		return core.PasswordLoginOk{}, err
+	} else {
+		return core.PasswordLoginOk{AccessToken: data.RawAccessToken}, nil
+	}
 }

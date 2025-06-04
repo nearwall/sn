@@ -7,12 +7,23 @@ import (
 type PwdHashAlgorithm uint8
 
 const (
-	Argon2ID PwdHashAlgorithm = iota
+	HashAlgoArgon2ID PwdHashAlgorithm = iota
 
-	DebugBytesSum = 255
+	HashAlgoDebugBytesSum = 255
 )
 
+type HashedPassword struct {
+	Hash      string
+	Algorithm PwdHashAlgorithm
+	Pepper    HashPepper
+}
+
+type HashPepper struct {
+	ID   uint8
+	Used bool
+}
+
 type PasswordService interface {
-	Hash(ctx context.Context, password string) (string, error)
-	Verify(ctx context.Context, password string, hashedPassword string) (bool, error)
+	Hash(ctx context.Context, password string) (HashedPassword, error)
+	Verify(ctx context.Context, password string, hashedPassword HashedPassword) (bool, error)
 }

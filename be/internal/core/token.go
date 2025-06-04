@@ -1,15 +1,19 @@
 package core
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
-type JwtInfo struct {
-	UserID uuid.UUID
+type TokenParameters struct {
+	UserID    uuid.UUID
+	CreatedAt time.Time
+	ExpiresAt time.Time
 }
 
-type JwtService interface {
-	Verify(raw string) (JwtInfo, error)
+type TokenService interface {
+	Verify(raw string) (TokenParameters, error)
 
-	Create(info JwtInfo) (string, error)
+	Create(params TokenParameters) (string, error)
 }

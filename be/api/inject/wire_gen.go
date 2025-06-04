@@ -12,7 +12,8 @@ import (
 	"sn/api"
 	"sn/api/rest"
 	"sn/api/rest/handlers"
-	"sn/internal/repository/user"
+	"sn/internal/repository/account"
+	"sn/internal/repository/info"
 	"sn/internal/service"
 )
 
@@ -23,14 +24,25 @@ func InitializeApplication(c *cli.Command, appCtx context.Context) (api.Containe
 	if err != nil {
 		return api.Container{}, err
 	}
-	userStore := repository.NewUserStore(client)
-	userService := service.NewUserService(userStore)
+	infoStore := info.NewInfoStore(client)
+	accountStore := account.NewAccountStore(client)
 	passwordServiceConfig, err := providePasswordServiceConfig(appCtx, c)
 	if err != nil {
 		return api.Container{}, err
 	}
 	passwordService := service.NewPasswordService(passwordServiceConfig)
-	authService := service.NewAuthService(userStore, passwordService)
+	userService := service.NewAccountService(infoStore, accountStore, passwordService)
+	sessionServiceConfig, err := provideSessionServiceConfig(appCtx, c)
+	if err != nil {
+		return api.Container{}, err
+	}
+	tokenServiceConfig, err := provideJWTServiceConfig(appCtx, c)
+	if err != nil {
+		return api.Container{}, err
+	}
+	tokenService := service.NewTokenService(tokenServiceConfig)
+	sessionService := service.NewSessionService(sessionServiceConfig, tokenService)
+	authService := service.NewAuthService(infoStore, accountStore, passwordService, sessionService)
 	resolver := handlers.NewResolver(userService, authService)
 	serverConfig, err := provideRestServerConfig(appCtx, c)
 	if err != nil {

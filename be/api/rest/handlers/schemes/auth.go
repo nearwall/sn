@@ -1,6 +1,8 @@
 package schemes
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 
 	api "sn/api/rest/generated"
@@ -19,13 +21,23 @@ func ToCoreLoginData(req api.OptLoginPostReq) (core.PasswordLoginData, error) {
 	}, nil
 }
 
-func FromCoreLoginWithPasswordError(err error) api.LoginPostRes {
-	// LoginPostNotFound
-	// LoginPostInternalServerError
-	return &api.LoginPostInternalServerError{}
+func FromLoginWithPasswordError(err error, reqID string) api.LoginPostRes {
+	switch {
+	case errors.Is(err, core.ErrLoginCreds):
+		return &api.LoginPostBadRequest{}
+	default:
+		return &api.LoginPostInternalServerError{
+			Response: api.R5xx{
+				Message:   "Internal error",
+				RequestID: api.NewOptString(reqID),
+				Code:      api.OptInt{},
+			},
+			RetryAfter: api.OptInt{},
+		}
+	}
 
 }
 
-func FromCoreLoginWithPasswordOk(data core.PasswordLoginOk) api.LoginPostRes {
+func FromLoginWithPasswordOk(data core.PasswordLoginOk) api.LoginPostRes {
 	return &api.LoginPostOK{Token: api.NewOptString(data.AccessToken)}
 }

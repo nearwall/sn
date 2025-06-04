@@ -18,6 +18,8 @@ import (
 //
 // api.Handler interface implementation
 func (r *Resolver) LoginPost(ctx context.Context, req api.OptLoginPostReq) (api.LoginPostRes, error) {
+	reqID, _ := ctx.Value(logger.RequestIDLabel).(string)
+
 	data, err := schemes.ToCoreLoginData(req)
 	if err != nil {
 		return &api.LoginPostBadRequest{}, nil
@@ -27,8 +29,8 @@ func (r *Resolver) LoginPost(ctx context.Context, req api.OptLoginPostReq) (api.
 	logger.Log().Debug(ctx, "Handle POST /login")
 
 	if tokens, err := r.auth.LoginWithPassword(ctx, data); err != nil {
-		return schemes.FromCoreLoginWithPasswordError(err), nil
+		return schemes.FromLoginWithPasswordError(err, reqID), nil
 	} else {
-		return schemes.FromCoreLoginWithPasswordOk(tokens), nil
+		return schemes.FromLoginWithPasswordOk(tokens), nil
 	}
 }

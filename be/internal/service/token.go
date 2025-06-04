@@ -27,14 +27,17 @@ type (
 	}
 )
 
-func NewJWTService(config TokenServiceConfig) core.JwtService {
+// FixMe: use config
+const EXPIRATION_HOURS = 24
+
+func NewTokenService(config TokenServiceConfig) core.TokenService {
 	return &tokenService{
 		key:        config.Key,
-		expiration: 24 * time.Hour}
+		expiration: EXPIRATION_HOURS * time.Hour}
 }
 
-// core.JwtService  interface implementation
-func (s *tokenService) Verify(raw string) (core.JwtInfo, error) {
+// core.TokenService  interface implementation
+func (s *tokenService) Verify(raw string) (core.TokenParameters, error) {
 	token, err := jwt.ParseWithClaims(raw, jwtClaims{}, func(_ *jwt.Token) (interface{}, error) {
 		return s.key, nil
 	})
@@ -58,11 +61,11 @@ func (s *tokenService) Verify(raw string) (core.JwtInfo, error) {
 		fmt.Println("Couldn't handle this token:", err)
 	}
 
-	return core.JwtInfo{}, nil
+	return core.TokenParameters{}, nil
 }
 
-// core.JwtService interface
-func (s *tokenService) Create(info core.JwtInfo) (string, error) {
+// core.TokenService interface
+func (s *tokenService) Create(info core.TokenParameters) (string, error) {
 	claims := jwtClaims{
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.expiration)),
@@ -79,12 +82,12 @@ func (s *tokenService) Create(info core.JwtInfo) (string, error) {
 	return token.SignedString(s.key)
 }
 
-func (c *jwtClaims) ToCore() (core.JwtInfo, error) {
+func (c *jwtClaims) ToCore() (core.TokenParameters, error) {
 	if userID, err := uuid.FromBytes(([]byte)(c.Subject)); err == nil {
-		return core.JwtInfo{
+		return core.TokenParameters{
 			UserID: userID,
 		}, nil
 	} else {
-		return core.JwtInfo{}, err
+		return core.TokenParameters{}, err
 	}
 }

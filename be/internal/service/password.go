@@ -21,7 +21,8 @@ type PasswordServiceConfig struct {
 }
 
 func NewPasswordService(config PasswordServiceConfig) core.PasswordService {
-	if config.HashAlgorithm == core.Argon2ID {
+	switch config.HashAlgorithm {
+	case core.HashAlgoArgon2ID:
 		return &argon2PwdService{
 			pepper: make([]byte, 0),
 			Argon2IDConfig: Argon2IDConfig{
@@ -32,8 +33,8 @@ func NewPasswordService(config PasswordServiceConfig) core.PasswordService {
 				KeyLength:   32,
 			},
 		}
-	} else {
-		return &dngPasswordService{}
+	default:
+		return &dbgPasswordService{}
 	}
 }
 
@@ -58,10 +59,11 @@ var (
 	ErrIncompatibleVersion = errors.New("incompatible version of argon2")
 )
 
-func (p *argon2PwdService) Hash(ctx context.Context, password string) (string, error) {
+// core.PasswordService interface
+func (p *argon2PwdService) Hash(ctx context.Context, password string) (core.HashedPassword, error) {
 	salt, err := genSalt(p.Argon2IDConfig.SaltLength)
 	if err != nil {
-		return "", err
+		return core.HashedPassword{}, err
 	}
 
 	hash := argon2.IDKey([]byte(password), salt, p.Argon2IDConfig.Iterations, p.Argon2IDConfig.Memory, p.Argon2IDConfig.Parallelism, p.Argon2IDConfig.KeyLength)
@@ -80,11 +82,15 @@ func (p *argon2PwdService) Hash(ctx context.Context, password string) (string, e
 		b64Salt,
 		b64Hash)
 
-	return encodedHash, nil
+	return core.HashedPassword{Hash: encodedHash, Algorithm: core.HashAlgoArgon2ID}, nil
 }
 
-func (_ *argon2PwdService) Verify(ctx context.Context, password string, hashedPassword string) (bool, error) {
-	hashParams, salt, hash, err := decodeHash(hashedPassword)
+// core.PasswordService interface
+func (_ *argon2PwdService) Verify(ctx context.Context, password string, hashedPassword core.HashedPassword) (bool, error) {
+	if hashedPassword.Algorithm != core.HashAlgoArgon2ID {
+		return false, fmt.Errorf("unsupported hash algorithm(only Argon2ID is available)")
+	}
+	hashParams, salt, hash, err := decodeHash(hashedPassword.Hash)
 	if err != nil {
 		return false, err
 	}
@@ -144,16 +150,21 @@ func decodeHash(encodedHash string) (p Argon2IDConfig, salt, hash []byte, err er
 	return p, salt, hash, nil
 }
 
-type dngPasswordService struct{}
+type dbgPasswordService struct{}
 
-func (_ *dngPasswordService) Hash(ctx context.Context, password string) (string, error) {
-	return strconv.Itoa(sumBytes(password)), nil
+// core.PasswordService interface
+func (_ *dbgPasswordService) Hash(ctx context.Context, password string) (core.HashedPassword, error) {
+	return core.HashedPassword{Hash: strconv.Itoa(sumBytes(password)), Algorithm: core.HashAlgoDebugBytesSum}, nil
 }
 
-func (_ *dngPasswordService) Verify(ctx context.Context, password string, hashedPassword string) (bool, error) {
+// core.PasswordService interface
+func (_ *dbgPasswordService) Verify(ctx context.Context, password string, hashedPassword core.HashedPassword) (bool, error) {
+	if hashedPassword.Algorithm != core.HashAlgoArgon2ID {
+		return false, fmt.Errorf("unsupported hash algorithm(only Argon2ID is available)")
+	}
 	hash := strconv.Itoa(sumBytes(password))
 
-	return hash == hashedPassword, nil
+	return hash == hashedPassword.Hash, nil
 }
 
 func sumBytes(s string) int {

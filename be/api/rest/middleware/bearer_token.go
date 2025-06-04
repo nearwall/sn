@@ -14,11 +14,11 @@ import (
 
 type (
 	BearerTokenAuth struct {
-		jwtHandler core.JwtService
+		jwtHandler core.TokenService
 	}
 )
 
-func NewBearerTokenAuth(jwtHandler core.JwtService) BearerTokenAuth {
+func NewBearerTokenAuth(jwtHandler core.TokenService) BearerTokenAuth {
 	return BearerTokenAuth{jwtHandler: jwtHandler}
 }
 
