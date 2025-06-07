@@ -14,7 +14,11 @@ type accountService struct {
 	password core.PasswordService
 }
 
-func NewAccountService(info core.InfoStore, account core.AccountStore, password core.PasswordService) core.AccountService {
+func NewAccountService(
+	info core.InfoStore,
+	account core.AccountStore,
+	password core.PasswordService,
+) core.AccountService {
 	return &accountService{
 		infoStg:  info,
 		accStg:   account,
@@ -22,7 +26,7 @@ func NewAccountService(info core.InfoStore, account core.AccountStore, password 
 	}
 }
 
-// core.UserService interface
+// core.AccountService interface
 func (s *accountService) Create(ctx context.Context, data core.RegistrationData) (core.CreationOk, error) {
 	// random UUID v4
 	accID := uuid.New()
@@ -33,11 +37,11 @@ func (s *accountService) Create(ctx context.Context, data core.RegistrationData)
 	}
 
 	// FixMe: It should be a transaction with usrStg
-	if err := s.accStg.Create(ctx, core.AccountCreationData{AccountID: accID, Password: pwd}); err != nil {
+	if err = s.accStg.Create(ctx, core.AccountCreationData{AccountID: accID, Password: pwd}); err != nil {
 		return core.CreationOk{}, err
 	}
 
-	if err := s.infoStg.LinkToAccount(ctx, accID, data.Info); err != nil {
+	if err = s.infoStg.LinkToAccount(ctx, accID, data.Info); err != nil {
 		return core.CreationOk{}, err
 	}
 
@@ -46,7 +50,7 @@ func (s *accountService) Create(ctx context.Context, data core.RegistrationData)
 	}, nil
 }
 
-// core.UserService interface
+// core.AccountService interface
 func (s *accountService) GetInfo(ctx context.Context, userID uuid.UUID) (core.PersonalInfo, error) {
 	return s.infoStg.ReadInfo(ctx, userID)
 }

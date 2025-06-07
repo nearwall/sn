@@ -22,15 +22,17 @@ func (r *Resolver) LoginPost(ctx context.Context, req api.OptLoginPostReq) (api.
 
 	data, err := schemes.ToCoreLoginData(req)
 	if err != nil {
+		//nolint: nilerr // api.LoginPostBadRequest - is result for such errors
 		return &api.LoginPostBadRequest{}, nil
 	}
 	ctx = context.WithValue(ctx, logger.UserIDLabel, data.UserID)
 
 	logger.Log().Debug(ctx, "Handle POST /login")
 
-	if tokens, err := r.auth.LoginWithPassword(ctx, data); err != nil {
+	tokens, err := r.auth.LoginWithPassword(ctx, data)
+	if err != nil {
 		return schemes.FromLoginWithPasswordError(err, reqID), nil
-	} else {
-		return schemes.FromLoginWithPasswordOk(tokens), nil
 	}
+
+	return schemes.FromLoginWithPasswordOk(tokens), nil
 }

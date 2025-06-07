@@ -12,6 +12,7 @@ import (
 	"sn/api"
 	"sn/api/rest"
 	"sn/api/rest/handlers"
+	"sn/api/rest/middleware"
 	"sn/internal/repository/account"
 	"sn/internal/repository/info"
 	"sn/internal/service"
@@ -31,7 +32,7 @@ func InitializeApplication(c *cli.Command, appCtx context.Context) (api.Containe
 		return api.Container{}, err
 	}
 	passwordService := service.NewPasswordService(passwordServiceConfig)
-	userService := service.NewAccountService(infoStore, accountStore, passwordService)
+	accountService := service.NewAccountService(infoStore, accountStore, passwordService)
 	sessionServiceConfig, err := provideSessionServiceConfig(appCtx, c)
 	if err != nil {
 		return api.Container{}, err
@@ -43,12 +44,13 @@ func InitializeApplication(c *cli.Command, appCtx context.Context) (api.Containe
 	tokenService := service.NewTokenService(tokenServiceConfig)
 	sessionService := service.NewSessionService(sessionServiceConfig, tokenService)
 	authService := service.NewAuthService(infoStore, accountStore, passwordService, sessionService)
-	resolver := handlers.NewResolver(userService, authService)
+	resolver := handlers.NewResolver(accountService, authService)
+	bearerTokenAuth := middleware.NewBearerTokenAuth(tokenService)
 	serverConfig, err := provideRestServerConfig(appCtx, c)
 	if err != nil {
 		return api.Container{}, err
 	}
-	server := rest.NewServer(resolver, serverConfig)
+	server := rest.NewServer(resolver, bearerTokenAuth, serverConfig)
 	container := api.NewContainer(client, server)
 	return container, nil
 }

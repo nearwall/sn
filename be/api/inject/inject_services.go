@@ -3,7 +3,7 @@ package inject
 import (
 	"context"
 	"encoding/hex"
-	"time"
+	"fmt"
 
 	"sn/internal/core"
 	"sn/internal/infra/postgres"
@@ -44,24 +44,37 @@ func providePostgresClient(ctx context.Context, cmd *cli.Command) (*postgres.Cli
 }
 
 func provideJWTServiceConfig(ctx context.Context, cmd *cli.Command) (service.TokenServiceConfig, error) {
-	key, err := hex.DecodeString(cmd.String("jwt-key"))
+	key, err := hex.DecodeString(cmd.String("token-secret-key"))
 
 	return service.TokenServiceConfig{
-		Key: key,
+		Key:                 key,
+		AccessTokenLifespan: cmd.Duration("access-token-lifespan"),
 	}, err
 }
 
-func providePasswordServiceConfig(_ctx context.Context, _cmd *cli.Command) (service.PasswordServiceConfig, error) {
+func providePasswordServiceConfig(_ctx context.Context, cmd *cli.Command) (service.PasswordServiceConfig, error) {
+	var pwdAlgoID core.PwdHashAlgorithm
+	switch ID := cmd.Uint8("password-hash-algorithm-id"); ID {
+	case uint8(core.HashAlgoArgon2ID):
+		pwdAlgoID = core.HashAlgoArgon2ID
+	default:
+		return service.PasswordServiceConfig{}, fmt.Errorf("unknown hash algorithm ID: %d", ID)
+	}
+
+	var hashPepper *string
+	if pepper := cmd.String("password-hash-pepper"); len(pepper) == 0 {
+		hashPepper = &pepper
+	}
+
 	return service.PasswordServiceConfig{
-		HashPepper: "",
-		// FixMe: add cli flag
-		HashAlgorithm: core.HashAlgoDebugBytesSum,
+		HashPepper:    hashPepper,
+		HashAlgorithm: pwdAlgoID,
 	}, nil
 }
 
-func provideSessionServiceConfig(_ctx context.Context, _cmd *cli.Command) (service.SessionServiceConfig, error) {
-	// FixMe: add cli flag
+func provideSessionServiceConfig(_ctx context.Context, cmd *cli.Command) (service.SessionServiceConfig, error) {
 	return service.SessionServiceConfig{
-		SessionDuration: 32 * time.Hour,
+		// ToDo: add special cli flag after adding refresh token
+		SessionDuration: cmd.Duration("access-token-lifespan"),
 	}, nil
 }

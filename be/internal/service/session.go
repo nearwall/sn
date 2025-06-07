@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"sn/internal/core"
@@ -29,17 +29,17 @@ func NewSessionService(config SessionServiceConfig, token core.TokenService) cor
 }
 
 // core SessionService interface
-func (s *sessionService) Open(ctx context.Context, UserID uuid.UUID) (core.OpenedSessionData, error) {
+func (s *sessionService) Open(_ context.Context, userID uuid.UUID) (core.OpenedSessionData, error) {
 	now := time.Now()
-
-	if rawAccessToken, err := s.token.Create(core.TokenParameters{UserID: UserID, CreatedAt: now, ExpiresAt: now.Add(s.sessionDuration)}); err != nil {
-		return core.OpenedSessionData{}, nil
-	} else {
-		return core.OpenedSessionData{RawAccessToken: rawAccessToken}, nil
+	rawAccessToken, err := s.token.Create(core.TokenParameters{AccountID: userID, CreatedAt: now, ExpiresAt: now.Add(s.sessionDuration)})
+	if err != nil {
+		return core.OpenedSessionData{}, err
 	}
+
+	return core.OpenedSessionData{RawAccessToken: rawAccessToken}, nil
 }
 
 // core SessionService interface
-func (s *sessionService) Close(ctx context.Context, UserID uuid.UUID) (bool, error) {
-	return false, fmt.Errorf("not implemented")
+func (s *sessionService) Close(_ context.Context, _UserID uuid.UUID) (bool, error) {
+	return false, errors.New("not implemented")
 }

@@ -35,7 +35,6 @@ func FromLoginWithPasswordError(err error, reqID string) api.LoginPostRes {
 			RetryAfter: api.OptInt{},
 		}
 	}
-
 }
 
 func FromLoginWithPasswordOk(data core.PasswordLoginOk) api.LoginPostRes {

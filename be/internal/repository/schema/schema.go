@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"errors"
-	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" //nolint
@@ -31,7 +30,7 @@ func Up(ctx context.Context, databaseURL string) error {
 		logger.Log().Error(ctx, "Fail to create configure migration", logger.ErrorLabel, err)
 		return err
 	}
-	if err := migrator.Up(); !errors.Is(err, migrate.ErrNoChange) {
+	if err = migrator.Up(); !errors.Is(err, migrate.ErrNoChange) {
 		logger.Log().Error(ctx, "Fail to migrate to new version(s)", logger.ErrorLabel, err)
 		return err
 	}
@@ -54,7 +53,7 @@ func CreateCleanDB(ctx context.Context, databaseURL string, migrationsURL string
 	if err = migrator.Down(); !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
-	if err := migrator.Up(); !errors.Is(err, migrate.ErrNoChange) {
+	if err = migrator.Up(); !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
 
@@ -65,16 +64,4 @@ func CreateCleanDB(ctx context.Context, databaseURL string, migrationsURL string
 
 	logger.Log().Info(ctx, "Applied %d version(dirty: %t)", version, dirty)
 	return nil
-}
-
-func TestPostgresMigrate(user, password, host, db string) {
-	databaseURL := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s?sslmode=disable",
-		user,
-		password,
-		host,
-		db,
-	)
-
-	Up(context.Background(), databaseURL)
 }

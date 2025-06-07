@@ -4,12 +4,21 @@ import (
 	"errors"
 	api "sn/api/rest/generated"
 	"sn/internal/core"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 func ToCoreRegistration(req api.OptUserRegisterPostReq) (core.RegistrationData, error) {
-	return core.RegistrationData{}, nil
+	return core.RegistrationData{
+		Info: core.PersonalInfo{
+			FirstName:  req.Value.FirstName.Value,
+			SecondName: req.Value.SecondName.Value,
+			Birthdate:  time.Time(req.Value.Birthdate.Value),
+			City:       req.Value.City.Value,
+			Biography:  req.Value.Biography.Value},
+		Password: req.Value.Password.Value,
+	}, nil
 }
 
 func FromRegistrationOk(data core.CreationOk) api.UserRegisterPostRes {

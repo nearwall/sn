@@ -16,7 +16,7 @@ var Cmd = cli.Command{
 	Name:  "sn",
 	Usage: "social network server",
 	Flags: cmdFlags,
-	OnUsageError: func(_ctx context.Context, _cmd *cli.Command, err error, _isSubcommand bool) error {
+	OnUsageError: func(_ context.Context, _cmd *cli.Command, err error, _isSubcommand bool) error {
 		return err
 	},
 	Action: run,

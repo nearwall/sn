@@ -52,7 +52,7 @@ func connect(config Config) (*sqlx.DB, error) {
 		db.SetMaxOpenConns(config.MaxOpenConns)
 	}
 
-	if err := ping(context.Background(), db); err != nil {
+	if err = ping(context.Background(), db); err != nil {
 		return nil, errors.New(
 			"failed to ping the database: " +
 				config.Host +

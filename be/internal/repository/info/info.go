@@ -21,7 +21,7 @@ func NewInfoStore(postgresClient *postgres.Client) core.InfoStore {
 }
 
 // core.InfoStore interface
-func (s *infoStore) LinkToAccount(ctx context.Context, accountID uuid.UUID, info core.PersonalInfo) error {
+func (s *infoStore) LinkToAccount(_ context.Context, accountID uuid.UUID, info core.PersonalInfo) error {
 	now := time.Now().UTC()
 	sql := `INSERT INTO personal_info (
 				account_id,
@@ -40,7 +40,7 @@ func (s *infoStore) LinkToAccount(ctx context.Context, accountID uuid.UUID, info
 }
 
 // core.InfoStore interface
-func (s *infoStore) ReadInfo(ctx context.Context, accountID uuid.UUID) (core.PersonalInfo, error) {
+func (s *infoStore) ReadInfo(_ context.Context, accountID uuid.UUID) (core.PersonalInfo, error) {
 	sql := `SELECT
 				first_name,
 				second_name,

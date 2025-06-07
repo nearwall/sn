@@ -43,8 +43,8 @@ type (
 	}
 
 	hashFeatures struct {
-		algo core.PwdHashAlgorithm
-		core.HashPepper
+		algo   core.PwdHashAlgorithm
+		pepper *core.HashPepper
 	}
 )
 
@@ -59,8 +59,7 @@ func NewAccountStore(postgresClient *postgres.Client) core.AccountStore {
 }
 
 // core.AccountStore interface
-func (s *accountStore) Create(ctx context.Context, data core.AccountCreationData) error {
-
+func (s *accountStore) Create(_ context.Context, data core.AccountCreationData) error {
 	hashedFeatures := createHashFeatures(data.Password)
 	now := time.Now().UTC()
 	sql := `INSERT INTO account (
@@ -78,7 +77,7 @@ func (s *accountStore) Create(ctx context.Context, data core.AccountCreationData
 }
 
 // core.AccountStore interface
-func (s *accountStore) ReadPasswordInfo(ctx context.Context, accountID uuid.UUID) (core.PasswordInfo, error) {
+func (s *accountStore) ReadPasswordInfo(_ context.Context, accountID uuid.UUID) (core.PasswordInfo, error) {
 	sql := `SELECT
 				hashed_pwd,
 				hash_features,
@@ -91,22 +90,23 @@ func (s *accountStore) ReadPasswordInfo(ctx context.Context, accountID uuid.UUID
 		return core.PasswordInfo{}, err
 	}
 
-	if features, err := fromFeatures(raw.features); err != nil {
+	features, err := fromFeatures(raw.features)
+	if err != nil {
 		return core.PasswordInfo{}, err
-	} else {
-		return core.PasswordInfo{
-				Password: core.HashedPassword{
-					Hash:      raw.hash,
-					Algorithm: features.algo,
-					Pepper:    features.HashPepper,
-				},
-				UpdatedAt: raw.updateAt},
-			nil
 	}
+
+	return core.PasswordInfo{
+			Password: core.HashedPassword{
+				Hash:      raw.hash,
+				Algorithm: features.algo,
+				Pepper:    features.pepper,
+			},
+			UpdatedAt: raw.updateAt},
+		nil
 }
 
 func createHashFeatures(password core.HashedPassword) int16 {
-	var features int16 = 0
+	var features int16
 	switch password.Algorithm {
 	case core.HashAlgoArgon2ID:
 		features |= argonAlgo << hashAlgoStartBit
@@ -114,7 +114,7 @@ func createHashFeatures(password core.HashedPassword) int16 {
 		features |= argonAlgo << hashAlgoStartBit
 	}
 
-	if password.Pepper.Used {
+	if password.Pepper != nil {
 		features |= int16(password.Pepper.ID << hashAlgoStartBit)
 	}
 
@@ -125,8 +125,7 @@ func fromFeatures(raw int16) (hashFeatures, error) {
 	var features hashFeatures
 
 	if (raw & pepperExistenceBit) != 0 {
-		features.Used = true
-		features.ID = uint8((raw & pepperIDMask) >> pepperIDStartBit)
+		features.pepper.ID = uint8((raw & pepperIDMask) >> pepperIDStartBit)
 	}
 
 	switch (raw & hashAlgoMask) >> hashAlgoStartBit {

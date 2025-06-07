@@ -19,7 +19,6 @@ func NewAuthService(
 	accStg core.AccountStore,
 	password core.PasswordService,
 	session core.SessionService) core.AuthService {
-
 	return &authService{
 		userStg:  storage,
 		accStg:   accStg,
@@ -38,12 +37,13 @@ func (a *authService) LoginWithPassword(ctx context.Context, data core.PasswordL
 	if isCorrect, err := a.password.Verify(ctx, data.Password, pwdInfo.Password); err != nil {
 		return core.PasswordLoginOk{}, err
 	} else if !isCorrect {
-		return core.PasswordLoginOk{}, errors.New("Wrong password")
+		return core.PasswordLoginOk{}, errors.New("Wrong password" + core.ErrLoginCreds.Error())
 	}
 
-	if data, err := a.session.Open(ctx, data.UserID); err != nil {
+	sessionData, err := a.session.Open(ctx, data.UserID)
+	if err != nil {
 		return core.PasswordLoginOk{}, err
-	} else {
-		return core.PasswordLoginOk{AccessToken: data.RawAccessToken}, nil
 	}
+
+	return core.PasswordLoginOk{AccessToken: sessionData.RawAccessToken}, nil
 }

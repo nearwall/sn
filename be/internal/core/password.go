@@ -15,12 +15,11 @@ const (
 type HashedPassword struct {
 	Hash      string
 	Algorithm PwdHashAlgorithm
-	Pepper    HashPepper
+	Pepper    *HashPepper
 }
 
 type HashPepper struct {
-	ID   uint8
-	Used bool
+	ID uint8
 }
 
 type PasswordService interface {

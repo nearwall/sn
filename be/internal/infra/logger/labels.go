@@ -1,8 +1,10 @@
 package logger
 
+type LogTags = string
+
 const (
-	UserIDLabel    = "user_id"
-	ErrorLabel     = "error"
-	RequestIDLabel = "req_id"
-	TraceIDLabel   = "trace_id"
+	UserIDLabel    LogTags = "user_id"
+	ErrorLabel     LogTags = "error"
+	RequestIDLabel LogTags = "req_id"
+	TraceIDLabel   LogTags = "trace_id"
 )

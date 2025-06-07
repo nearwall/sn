@@ -1,6 +1,8 @@
 package sn
 
 import (
+	"time"
+
 	"github.com/urfave/cli/v3"
 )
 
@@ -64,5 +66,29 @@ var cmdFlags = []cli.Flag{
 		Usage:   "postgres disable tls",
 		Sources: cli.EnvVars("POSTGRES_DISABLE_TLS"),
 		Value:   true,
+	},
+	// tokens
+	&cli.DurationFlag{
+		Name:    "access-token-lifespan",
+		Usage:   "access token lifespan",
+		Sources: cli.EnvVars("ACCESS_TOKEN_LIFESPAN"),
+		Value:   1 * time.Hour,
+	},
+	&cli.StringFlag{
+		Name:    "token-secret-key",
+		Usage:   "token secret key",
+		Sources: cli.EnvVars("TOKEN_SECRET_KEY"),
+	},
+	// password
+	&cli.IntFlag{
+		Name:    "password-hash-algorithm-id",
+		Usage:   "password hash algorithm ID",
+		Sources: cli.EnvVars("PASSWORD_HASH_ALGORITHM_ID"),
+	},
+	&cli.StringFlag{
+		Name:    "password-hash-pepper",
+		Usage:   "password hash pepper",
+		Sources: cli.EnvVars("PASSWORD_HASH_PEPPER"),
+		Value:   "",
 	},
 }

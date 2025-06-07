@@ -12,25 +12,25 @@ import (
 	"sn/version"
 )
 
-var globalFlags = []cli.Flag{
-	&cli.BoolFlag{
-		Name:    "debug",
-		Usage:   "Debug",
-		Sources: cli.EnvVars("DEBUG"),
-		Value:   true,
-	},
-	&cli.BoolFlag{
-		Name:    "disable-stack-trace",
-		Usage:   "Disable stack trace",
-		Sources: cli.EnvVars("DISABLE_STACK_TRACE"),
-		Value:   true,
-	},
-}
-
 // @Version 0.0.0
 // @Title social_network
 // @Description Social network server
 func main() {
+	var globalFlags = []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "debug",
+			Usage:   "Debug",
+			Sources: cli.EnvVars("DEBUG"),
+			Value:   true,
+		},
+		&cli.BoolFlag{
+			Name:    "disable-stack-trace",
+			Usage:   "Disable stack trace",
+			Sources: cli.EnvVars("DISABLE_STACK_TRACE"),
+			Value:   true,
+		},
+	}
+
 	app := &cli.Command{
 		Usage: "SN",
 		Commands: []*cli.Command{
@@ -40,7 +40,7 @@ func main() {
 		EnableShellCompletion: true,
 		Flags:                 globalFlags,
 		Version:               version.Version + " (" + version.GitCommit + ")",
-		OnUsageError: func(_ctx context.Context, _cmd *cli.Command, err error, _isSubcommand bool) error {
+		OnUsageError: func(_ context.Context, _ *cli.Command, err error, _ bool) error {
 			return err
 		},
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {

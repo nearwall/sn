@@ -12,7 +12,7 @@ import (
 )
 
 // wire Set for loading the server.
-var serverSet = wire.NewSet(
+var serverSet = wire.NewSet( // nolint: unused // it used for wire autogeneration
 	handlers.NewResolver,
 	rest.NewServer,
 	middleware.NewBearerTokenAuth,

@@ -23,6 +23,7 @@ func (r *Resolver) UserGetIDGet(ctx context.Context, params api.UserGetIDGetPara
 	userID, err := uuid.Parse(string(params.ID))
 	if err != nil {
 		logger.Log().Info(ctx, "incorrect user ID format", logger.ErrorLabel, err.Error())
+		//nolint: nilerr // response UserGetIDGetBadRequest will be returned instead of error
 		return &api.UserGetIDGetBadRequest{}, nil
 	}
 
@@ -30,6 +31,7 @@ func (r *Resolver) UserGetIDGet(ctx context.Context, params api.UserGetIDGetPara
 	if err != nil {
 		logger.Log().Info(ctx, "Fail to get user info", logger.ErrorLabel, err.Error())
 		// It's a bit wired. User was deleted while we was handling this request
+		//nolint: nilerr // corresponding error response will be returned instead of error
 		return schemes.FromUserGetInfoErr(err, reqID), nil
 	}
 
@@ -48,11 +50,13 @@ func (r *Resolver) UserRegisterPost(ctx context.Context, req api.OptUserRegister
 
 	data, err := schemes.ToCoreRegistration(req)
 	if err != nil {
+		//nolint: nilerr // response `UserRegisterPostBadRequest` will be returned instead of error
 		return &api.UserRegisterPostBadRequest{}, nil
 	}
 
 	success, err := r.user.Create(ctx, data)
 	if err != nil {
+		//nolint: nilerr // corresponding error response will be returned instead of error
 		return schemes.FromRegistrationErr(err, reqID), nil
 	}
 
