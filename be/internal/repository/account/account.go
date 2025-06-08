@@ -59,7 +59,7 @@ func NewAccountStore(postgresClient *postgres.Client) core.AccountStore {
 }
 
 // core.AccountStore interface
-func (s *accountStore) Create(_ context.Context, data core.AccountCreationData) error {
+func (s *accountStore) Create(ctx context.Context, data core.AccountCreationData) error {
 	hashedFeatures := createHashFeatures(data.Password)
 	now := time.Now().UTC()
 	sql := `INSERT INTO account (
@@ -71,13 +71,13 @@ func (s *accountStore) Create(_ context.Context, data core.AccountCreationData) 
 				created_at
 			) VALUES ($1, $2, $3, $4)`
 
-	_, err := s.client.DB.Exec(sql, data.AccountID, data.Password.Hash, hashedFeatures, now, now, now)
+	_, err := s.client.DB.ExecContext(ctx, sql, data.AccountID, data.Password.Hash, hashedFeatures, now, now, now)
 
 	return err
 }
 
 // core.AccountStore interface
-func (s *accountStore) ReadPasswordInfo(_ context.Context, accountID uuid.UUID) (core.PasswordInfo, error) {
+func (s *accountStore) ReadPasswordInfo(ctx context.Context, accountID uuid.UUID) (core.PasswordInfo, error) {
 	sql := `SELECT
 				hashed_pwd,
 				hash_features,
@@ -86,7 +86,7 @@ func (s *accountStore) ReadPasswordInfo(_ context.Context, accountID uuid.UUID) 
 			WHERE id=$1`
 
 	var raw passwordRawInfo
-	if err := s.client.DB.QueryRowx(sql, accountID).StructScan(&raw); err != nil {
+	if err := s.client.DB.QueryRowxContext(ctx, sql, accountID).StructScan(&raw); err != nil {
 		return core.PasswordInfo{}, err
 	}
 

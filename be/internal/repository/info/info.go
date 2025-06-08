@@ -21,7 +21,7 @@ func NewInfoStore(postgresClient *postgres.Client) core.InfoStore {
 }
 
 // core.InfoStore interface
-func (s *infoStore) LinkToAccount(_ context.Context, accountID uuid.UUID, info core.PersonalInfo) error {
+func (s *infoStore) LinkToAccount(ctx context.Context, accountID uuid.UUID, info core.PersonalInfo) error {
 	now := time.Now().UTC()
 	sql := `INSERT INTO personal_info (
 				account_id,
@@ -34,13 +34,14 @@ func (s *infoStore) LinkToAccount(_ context.Context, accountID uuid.UUID, info c
 				created_at
 			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
-	_, err := s.client.DB.Exec(sql, accountID, "", now, now, now)
+	_, err := s.client.DB.ExecContext(ctx, sql, accountID, "", now, now, now)
+
 
 	return err
 }
 
 // core.InfoStore interface
-func (s *infoStore) ReadInfo(_ context.Context, accountID uuid.UUID) (core.PersonalInfo, error) {
+func (s *infoStore) ReadInfo(ctx context.Context, accountID uuid.UUID) (core.PersonalInfo, error) {
 	sql := `SELECT
 				first_name,
 				second_name,
@@ -53,7 +54,7 @@ func (s *infoStore) ReadInfo(_ context.Context, accountID uuid.UUID) (core.Perso
 			WHERE account_id=$1`
 
 	var raw rawInfo
-	if err := s.client.DB.QueryRowx(sql, accountID).StructScan(&raw); err != nil {
+	if err := s.client.DB.QueryRowxContext(ctx, sql, accountID).StructScan(&raw); err != nil {
 		return core.PersonalInfo{}, err
 	}
 
