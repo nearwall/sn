@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"sn/internal/core"
-
 	"github.com/google/uuid"
+
+	"sn/internal/core"
 )
 
 type accountService struct {

@@ -40,11 +40,13 @@ func NewServer(rslvr handlers.Resolver, tokenAuth middleware.BearerTokenAuth, co
 }
 
 func (srv *Server) Run(ctx context.Context) error {
+	logger.Log().Infof(ctx, "Start HTTP server on: %s", srv.config.Addr)
+
 	server, err := api.NewServer(
 		&srv.resolver,
 		&srv.tokenAuth,
 		api.WithNotFound(func(w http.ResponseWriter, r *http.Request) {
-			logger.Log().Info(ctx, "Unhandled request: %s %s", r.Method, r.URL.Path)
+			logger.Log().Infof(ctx, "Unhandled request: %s %s", r.Method, r.URL.Path)
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
@@ -81,11 +83,13 @@ func (srv *Server) Run(ctx context.Context) error {
 		shutdownCtx := context.Background()
 		logger.Log().Infof(shutdownCtx, "Shutting down because of %s", shutdownReason)
 
-		return httpServer.Shutdown(shutdownCtx)
+		return httpServer.Close()
 	})
 
 	g.Go(func() error {
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Log().Errorf(ctx, "Got an error by listening: %s", err.Error())
+
 			return err
 		}
 		return nil

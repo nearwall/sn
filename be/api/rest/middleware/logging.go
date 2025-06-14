@@ -11,7 +11,7 @@ func LogRequests() Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := context.WithValue(r.Context(), logger.RequestIDLabel, "")
 
-			logger.Log().Infof(ctx, "Request handling: %s", LabelHTTPMethod, r.Method, LabelHTTPPath, r.URL.Path)
+			logger.Log().Info(ctx, "Request handling", LabelHTTPMethod, r.Method, LabelHTTPPath, r.URL.Path)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

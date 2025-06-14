@@ -3,6 +3,7 @@ package account
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"sn/internal/core"
@@ -37,9 +38,10 @@ const (
 
 type (
 	passwordRawInfo struct {
-		hash     string    `db:"hashed_pwd"`
-		features int16     `db:"hash_features"`
-		updateAt time.Time `db:"pwd_updated_at"`
+		// fields are capitalized oly for sqlx correct parsing
+		Hash     string    `db:"hashed_pwd"`
+		Features int16     `db:"hash_features"`
+		UpdateAt time.Time `db:"pwd_updated_at"`
 	}
 
 	hashFeatures struct {
@@ -69,11 +71,13 @@ func (s *accountStore) Create(ctx context.Context, data core.AccountCreationData
 				pwd_updated_at,
 				updated_at,
 				created_at
-			) VALUES ($1, $2, $3, $4)`
+			) VALUES ($1, $2, $3, $4, $5, $6)`
 
-	_, err := s.client.DB.ExecContext(ctx, sql, data.AccountID, data.Password.Hash, hashedFeatures, now, now, now)
+	if _, err := s.client.DB.ExecContext(ctx, sql, data.AccountID, data.Password.Hash, hashedFeatures, now, now, now); err != nil {
+		return fmt.Errorf("fail to create an entry in `account` table: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // core.AccountStore interface
@@ -87,21 +91,21 @@ func (s *accountStore) ReadPasswordInfo(ctx context.Context, accountID uuid.UUID
 
 	var raw passwordRawInfo
 	if err := s.client.DB.QueryRowxContext(ctx, sql, accountID).StructScan(&raw); err != nil {
-		return core.PasswordInfo{}, err
+		return core.PasswordInfo{}, fmt.Errorf("fail to obtain `account` row: %w", err)
 	}
 
-	features, err := fromFeatures(raw.features)
+	features, err := fromFeatures(raw.Features)
 	if err != nil {
-		return core.PasswordInfo{}, err
+		return core.PasswordInfo{}, fmt.Errorf("fail to convert `account` row to `hashFeatures`: %w", err)
 	}
 
 	return core.PasswordInfo{
 			Password: core.HashedPassword{
-				Hash:      raw.hash,
+				Hash:      raw.Hash,
 				Algorithm: features.algo,
 				Pepper:    features.pepper,
 			},
-			UpdatedAt: raw.updateAt},
+			UpdatedAt: raw.UpdateAt},
 		nil
 }
 

@@ -37,7 +37,7 @@ func (a *authService) LoginWithPassword(ctx context.Context, data core.PasswordL
 	if isCorrect, err := a.password.Verify(ctx, data.Password, pwdInfo.Password); err != nil {
 		return core.PasswordLoginOk{}, err
 	} else if !isCorrect {
-		return core.PasswordLoginOk{}, fmt.Errorf("Wrong password: %w", core.ErrLoginCreds)
+		return core.PasswordLoginOk{}, fmt.Errorf("wrong password: %w", core.ErrLoginCreds)
 	}
 
 	sessionData, err := a.session.Open(ctx, data.UserID)

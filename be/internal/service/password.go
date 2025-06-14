@@ -63,7 +63,7 @@ var (
 func (p *argon2PwdService) Hash(ctx context.Context, password string) (core.HashedPassword, error) {
 	salt, err := genSalt(p.Argon2IDConfig.SaltLength)
 	if err != nil {
-		return core.HashedPassword{}, err
+		return core.HashedPassword{}, fmt.Errorf("fail to generate salt for hash: %w", err)
 	}
 
 	hash := argon2.IDKey(
@@ -98,7 +98,7 @@ func (*argon2PwdService) Verify(ctx context.Context, password string, hashedPass
 	}
 	hashParams, salt, hash, err := decodeHash(hashedPassword.Hash)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("fail to decode hash string: %w", err)
 	}
 
 	pwdHash := argon2.IDKey(
@@ -171,8 +171,8 @@ func (*dbgPasswordService) Hash(_ context.Context, password string) (core.Hashed
 
 // core.PasswordService interface
 func (*dbgPasswordService) Verify(_ context.Context, password string, hashedPassword core.HashedPassword) (bool, error) {
-	if hashedPassword.Algorithm != core.HashAlgoArgon2ID {
-		return false, errors.New("unsupported hash algorithm(only Argon2ID is available)")
+	if hashedPassword.Algorithm != core.HashAlgoDebugBytesSum {
+		return false, errors.New("unsupported hash algorithm(only Debug Bytes Sum is available)")
 	}
 	hash := strconv.Itoa(sumBytes(password))
 

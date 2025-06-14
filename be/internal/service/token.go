@@ -79,20 +79,23 @@ func (s *tokenService) Create(info core.TokenParameters) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(s.key)
+	signedToken, err := token.SignedString(s.key)
+	if err != nil {
+		return "", fmt.Errorf("fail sign token: %w", err)
+	}
+
+	return signedToken, nil
 }
 
 func (c *jwtClaims) ToCore() (core.TokenParameters, error) {
 	ID, err := uuid.FromBytes(([]byte)(c.Subject))
-	if err == nil {
-		return core.TokenParameters{
-			AccountID: ID,
-		}, nil
+	if err != nil {
+		return core.TokenParameters{}, fmt.Errorf("fail to convert `Subject` claim to `AccountID`(UUID): %w", err)
 	}
 
 	return core.TokenParameters{
 		AccountID: ID,
 		CreatedAt: c.IssuedAt.Time,
 		ExpiresAt: c.ExpiresAt.Time,
-	}, err
+	}, nil
 }

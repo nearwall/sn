@@ -45,11 +45,14 @@ func providePostgresClient(ctx context.Context, cmd *cli.Command) (*postgres.Cli
 
 func provideJWTServiceConfig(ctx context.Context, cmd *cli.Command) (service.TokenServiceConfig, error) {
 	key, err := hex.DecodeString(cmd.String("token-secret-key"))
+	if err != nil {
+		return service.TokenServiceConfig{}, fmt.Errorf("fail to parse 'token-secret-key' as hex bytes string: %w", err)
+	}
 
 	return service.TokenServiceConfig{
 		Key:                 key,
 		AccessTokenLifespan: cmd.Duration("access-token-lifespan"),
-	}, err
+	}, nil
 }
 
 func providePasswordServiceConfig(_ctx context.Context, cmd *cli.Command) (service.PasswordServiceConfig, error) {
