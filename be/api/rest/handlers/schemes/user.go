@@ -5,9 +5,9 @@ import (
 	api "sn/api/rest/generated"
 	"sn/internal/core"
 	"time"
-
-	"github.com/google/uuid"
 )
+
+const UserSearchEntitiesLimit uint16 = 1000
 
 func ToCoreRegistration(req api.OptUserRegisterPostReq) (core.RegistrationData, error) {
 	return core.RegistrationData{
@@ -43,9 +43,14 @@ func FromRegistrationErr(err error, reqID string) api.UserRegisterPostRes {
 	}
 }
 
-func FromGetUserInfoOk(userID uuid.UUID, info core.PersonalInfo) api.UserGetIDGetRes {
-	return &api.User{
-		ID:         api.NewOptUserId(api.UserId(userID.String())),
+func FromGetUserInfoOk(info core.PersonalInfoEntity) api.UserGetIDGetRes {
+	user := fromCorePersonalInfoEntityToUser(info)
+	return &user
+}
+
+func fromCorePersonalInfoEntityToUser(info core.PersonalInfoEntity) api.User {
+	return api.User{
+		ID:         api.NewOptUserId(api.UserId(info.UserID.String())),
 		FirstName:  api.NewOptString(info.FirstName),
 		SecondName: api.NewOptString(info.SecondName),
 		Biography:  api.NewOptString(info.Biography),
@@ -60,6 +65,32 @@ func FromUserGetInfoErr(err error, reqID string) api.UserGetIDGetRes {
 		return &api.UserGetIDGetNotFound{}
 	default:
 		return &api.UserGetIDGetInternalServerError{
+			Response: api.R5xx{
+				Message:   "Internal error",
+				RequestID: api.NewOptString(reqID),
+				Code:      api.OptInt{},
+			},
+			RetryAfter: api.OptInt{},
+		}
+	}
+}
+
+func FromUserSearchOk(data []core.PersonalInfoEntity) api.UserSearchGetRes {
+	var users api.UserSearchGetOKApplicationJSON = make([]api.User, 0, len(data))
+
+	for _, value := range data {
+		users = append(users, fromCorePersonalInfoEntityToUser(value))
+	}
+
+	return &users
+}
+
+func FromUserSearchErr(err error, reqID string) api.UserSearchGetRes {
+	switch {
+	case errors.Is(err, core.ErrAccountExist):
+		return &api.UserSearchGetBadRequest{}
+	default:
+		return &api.UserSearchGetInternalServerError{
 			Response: api.R5xx{
 				Message:   "Internal error",
 				RequestID: api.NewOptString(reqID),

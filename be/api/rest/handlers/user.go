@@ -35,7 +35,7 @@ func (r *Resolver) UserGetIDGet(ctx context.Context, params api.UserGetIDGetPara
 	}
 
 	logger.Log().Infof(ctx, "account %s info was read successfully", userID)
-	return schemes.FromGetUserInfoOk(userID, info), nil
+	return schemes.FromGetUserInfoOk(info), nil
 }
 
 // UserRegisterPost implements POST /user/register operation.
@@ -70,5 +70,27 @@ func (r *Resolver) UserRegisterPost(ctx context.Context, req api.OptUserRegister
 //
 // GET /user/search
 func (r *Resolver) UserSearchGet(ctx context.Context, params api.UserSearchGetParams) (api.UserSearchGetRes, error) {
-	return &api.UserSearchGetServiceUnavailable{}, nil
+	reqID, _ := ctx.Value(logger.RequestIDLabel).(string)
+
+	entries, err := r.user.SearchAccounts(
+		ctx,
+		core.SearchAccountsInfoParams{
+			FirstName: params.FirstName,
+			LastName:  params.LastName,
+			Limit:     schemes.UserSearchEntitiesLimit,
+		})
+	if err != nil {
+		logger.Log().Infof(ctx, "fail to search accounts by prefixes  %s - first name, %s - last name: %w", params.FirstName, params.LastName, err)
+
+		//nolint: nilerr // corresponding error response will be returned instead of error
+		return schemes.FromUserSearchErr(err, reqID), nil
+	}
+
+	logger.Log().Infof(ctx,
+		"search accounts by prefixes  %s - first name, %s - last name accomplished with %d entries",
+		params.FirstName,
+		params.LastName,
+		len(entries))
+	return schemes.FromUserSearchOk(entries), nil
+
 }

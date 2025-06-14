@@ -25,6 +25,17 @@ type (
 		Biography  string
 		City       string
 	}
+
+	PersonalInfoEntity struct {
+		PersonalInfo
+		UserID uuid.UUID
+	}
+
+	SearchAccountsInfoParams struct {
+		FirstName string
+		LastName  string
+		Limit     uint16
+	}
 )
 
 var (
@@ -35,13 +46,17 @@ var (
 type AccountService interface {
 	Create(ctx context.Context, data RegistrationData) (CreationOk, error)
 
-	GetInfo(ctx context.Context, userID uuid.UUID) (PersonalInfo, error)
+	GetInfo(ctx context.Context, userID uuid.UUID) (PersonalInfoEntity, error)
+
+	SearchAccounts(ctx context.Context, parameters SearchAccountsInfoParams) ([]PersonalInfoEntity, error)
 }
 
 type InfoStore interface {
 	LinkToAccount(ctx context.Context, accountID uuid.UUID, info PersonalInfo) error
 
-	ReadInfo(ctx context.Context, accountID uuid.UUID) (PersonalInfo, error)
+	ReadInfo(ctx context.Context, accountID uuid.UUID) (PersonalInfoEntity, error)
+
+	GetInfoList(ctx context.Context, parameters SearchAccountsInfoParams) ([]PersonalInfoEntity, error)
 }
 
 type (
