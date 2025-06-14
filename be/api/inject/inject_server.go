@@ -21,6 +21,6 @@ var serverSet = wire.NewSet( // nolint: unused // it used for wire autogeneratio
 
 func provideRestServerConfig(ctx context.Context, cmd *cli.Command) (rest.ServerConfig, error) {
 	return rest.ServerConfig{
-		Addr: cmd.String("addr"),
+		Addr: cmd.String("server-host"),
 	}, nil
 }

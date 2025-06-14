@@ -7,6 +7,7 @@ import (
 
 	api "sn/api/rest/generated"
 	"sn/api/rest/handlers/schemes"
+	"sn/internal/core"
 	"sn/internal/infra/logger"
 )
 
@@ -16,8 +17,6 @@ import (
 //
 // GET /user/get/{id}
 func (r *Resolver) UserGetIDGet(ctx context.Context, params api.UserGetIDGetParams) (api.UserGetIDGetRes, error) {
-	logger.Log().Debug(ctx, "Handle POST /user/register")
-
 	reqID, _ := ctx.Value(logger.RequestIDLabel).(string)
 
 	userID, err := uuid.Parse(string(params.ID))
@@ -35,6 +34,7 @@ func (r *Resolver) UserGetIDGet(ctx context.Context, params api.UserGetIDGetPara
 		return schemes.FromUserGetInfoErr(err, reqID), nil
 	}
 
+	logger.Log().Infof(ctx, "account %s info was read successfully", userID)
 	return schemes.FromGetUserInfoOk(userID, info), nil
 }
 
@@ -44,22 +44,23 @@ func (r *Resolver) UserGetIDGet(ctx context.Context, params api.UserGetIDGetPara
 //
 // POST /user/register
 func (r *Resolver) UserRegisterPost(ctx context.Context, req api.OptUserRegisterPostReq) (api.UserRegisterPostRes, error) {
-	logger.Log().Debug(ctx, "Handle POST /user/register")
-
 	reqID, _ := ctx.Value(logger.RequestIDLabel).(string)
 
 	data, err := schemes.ToCoreRegistration(req)
 	if err != nil {
+		logger.Log().Infof(ctx, "fail to parse request body: %w", err)
 		//nolint: nilerr // response `UserRegisterPostBadRequest` will be returned instead of error
 		return &api.UserRegisterPostBadRequest{}, nil
 	}
 
 	success, err := r.user.Create(ctx, data)
 	if err != nil {
+		logger.Log().Infof(ctx, "fail to create account: %w", err)
 		//nolint: nilerr // corresponding error response will be returned instead of error
 		return schemes.FromRegistrationErr(err, reqID), nil
 	}
 
+	logger.Log().Infof(ctx, "account %s was created successfully", success.UserID)
 	return schemes.FromRegistrationOk(success), nil
 }
 

@@ -20,4 +20,4 @@ COPY --from=build --chown=nobody:nogroup /src/${SERVICE_NAME} ./app/${SERVICE_NA
 USER nobody:nogroup
 WORKDIR /app
 
-ENTRYPOINT ./sn run
+ENTRYPOINT ./sn sn

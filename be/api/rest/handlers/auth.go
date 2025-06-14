@@ -22,6 +22,7 @@ func (r *Resolver) LoginPost(ctx context.Context, req api.OptLoginPostReq) (api.
 
 	data, err := schemes.ToCoreLoginData(req)
 	if err != nil {
+		logger.Log().Infof(ctx, "fail to parse request body: %w", err)
 		//nolint: nilerr // api.LoginPostBadRequest - is result for such errors
 		return &api.LoginPostBadRequest{}, nil
 	}
@@ -31,8 +32,10 @@ func (r *Resolver) LoginPost(ctx context.Context, req api.OptLoginPostReq) (api.
 
 	tokens, err := r.auth.LoginWithPassword(ctx, data)
 	if err != nil {
+		logger.Log().Infof(ctx, "fail to login into %s account with password: %w", data.UserID, err)
 		return schemes.FromLoginWithPasswordError(err, reqID), nil
 	}
 
+	logger.Log().Infof(ctx, "account %s logged in(new session opened)", data.UserID)
 	return schemes.FromLoginWithPasswordOk(tokens), nil
 }
