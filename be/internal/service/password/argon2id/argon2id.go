@@ -1,4 +1,4 @@
-package service
+package argon2id
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
@@ -15,37 +14,14 @@ import (
 	"sn/internal/core"
 )
 
-type PasswordServiceConfig struct {
-	HashPepper    *string
-	HashAlgorithm core.PwdHashAlgorithm
-}
-
-func NewPasswordService(config PasswordServiceConfig) core.PasswordService {
-	switch config.HashAlgorithm {
-	case core.HashAlgoArgon2ID:
-		return &argon2PwdService{
-			pepper: make([]byte, 0),
-			Argon2IDConfig: Argon2IDConfig{
-				Memory:      64 * 1024,
-				Iterations:  4,
-				Parallelism: 2,
-				SaltLength:  16,
-				KeyLength:   32,
-			},
-		}
-	default:
-		return &dbgPasswordService{}
-	}
-}
-
 type (
 	argon2PwdService struct {
 		// ToDo: use pepper
-		pepper         []byte
-		Argon2IDConfig Argon2IDConfig
+		pepper []byte
+		config Config
 	}
 
-	Argon2IDConfig struct {
+	Config struct {
 		Memory      uint32
 		Iterations  uint32
 		Parallelism uint8
@@ -59,9 +35,16 @@ var (
 	ErrIncompatibleVersion = errors.New("incompatible version of argon2")
 )
 
+func NewService(config Config, pepper []byte) core.PasswordService {
+	return &argon2PwdService{
+		pepper: pepper,
+		config: config,
+	}
+}
+
 // core.PasswordService interface
 func (p *argon2PwdService) Hash(ctx context.Context, password string) (core.HashedPassword, error) {
-	salt, err := genSalt(p.Argon2IDConfig.SaltLength)
+	salt, err := genSalt(p.config.SaltLength)
 	if err != nil {
 		return core.HashedPassword{}, fmt.Errorf("fail to generate salt for hash: %w", err)
 	}
@@ -69,10 +52,10 @@ func (p *argon2PwdService) Hash(ctx context.Context, password string) (core.Hash
 	hash := argon2.IDKey(
 		[]byte(password),
 		salt,
-		p.Argon2IDConfig.Iterations,
-		p.Argon2IDConfig.Memory,
-		p.Argon2IDConfig.Parallelism,
-		p.Argon2IDConfig.KeyLength)
+		p.config.Iterations,
+		p.config.Memory,
+		p.config.Parallelism,
+		p.config.KeyLength)
 
 	// Base64 encode the salt and hashed password.
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
@@ -82,9 +65,9 @@ func (p *argon2PwdService) Hash(ctx context.Context, password string) (core.Hash
 	encodedHash := fmt.Sprintf(
 		"$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
 		argon2.Version,
-		p.Argon2IDConfig.Memory,
-		p.Argon2IDConfig.Iterations,
-		p.Argon2IDConfig.Parallelism,
+		p.config.Memory,
+		p.config.Iterations,
+		p.config.Parallelism,
 		b64Salt,
 		b64Hash)
 
@@ -126,63 +109,38 @@ func genSalt(bytesCnt uint32) ([]byte, error) {
 	return b, nil
 }
 
-func decodeHash(encodedHash string) (config Argon2IDConfig, salt, hash []byte, err error) {
+func decodeHash(encodedHash string) (config Config, salt, hash []byte, err error) {
 	vals := strings.Split(encodedHash, "$")
 	if len(vals) != 6 {
-		return Argon2IDConfig{}, nil, nil, ErrInvalidHash
+		return Config{}, nil, nil, ErrInvalidHash
 	}
 
 	var version int
 	_, err = fmt.Sscanf(vals[2], "v=%d", &version)
 	if err != nil {
-		return Argon2IDConfig{}, nil, nil, err
+		return Config{}, nil, nil, err
 	}
 	if version != argon2.Version {
-		return Argon2IDConfig{}, nil, nil, ErrIncompatibleVersion
+		return Config{}, nil, nil, ErrIncompatibleVersion
 	}
 
-	config = Argon2IDConfig{}
+	config = Config{}
 	_, err = fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &config.Memory, &config.Iterations, &config.Parallelism)
 	if err != nil {
-		return Argon2IDConfig{}, nil, nil, err
+		return Config{}, nil, nil, err
 	}
 
 	salt, err = base64.RawStdEncoding.Strict().DecodeString(vals[4])
 	if err != nil {
-		return Argon2IDConfig{}, nil, nil, err
+		return Config{}, nil, nil, err
 	}
 	config.SaltLength = uint32(len(salt))
 
 	hash, err = base64.RawStdEncoding.Strict().DecodeString(vals[5])
 	if err != nil {
-		return Argon2IDConfig{}, nil, nil, err
+		return Config{}, nil, nil, err
 	}
 	config.KeyLength = uint32(len(hash))
 
 	return
-}
-
-type dbgPasswordService struct{}
-
-// core.PasswordService interface
-func (*dbgPasswordService) Hash(_ context.Context, password string) (core.HashedPassword, error) {
-	return core.HashedPassword{Hash: strconv.Itoa(sumBytes(password)), Algorithm: core.HashAlgoDebugBytesSum}, nil
-}
-
-// core.PasswordService interface
-func (*dbgPasswordService) Verify(_ context.Context, password string, hashedPassword core.HashedPassword) (bool, error) {
-	if hashedPassword.Algorithm != core.HashAlgoDebugBytesSum {
-		return false, errors.New("unsupported hash algorithm(only Debug Bytes Sum is available)")
-	}
-	hash := strconv.Itoa(sumBytes(password))
-
-	return hash == hashedPassword.Hash, nil
-}
-
-func sumBytes(s string) int {
-	sum := 0
-	for i := range len(s) {
-		sum += int(s[i])
-	}
-	return sum
 }

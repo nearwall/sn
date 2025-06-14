@@ -30,7 +30,7 @@ func Up(ctx context.Context, databaseURL string) error {
 		logger.Log().Error(ctx, "Fail to create configure migration", logger.ErrorLabel, err)
 		return err
 	}
-	if err = migrator.Up(); !errors.Is(err, migrate.ErrNoChange) {
+	if err = migrator.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		logger.Log().Error(ctx, "Fail to migrate to new version(s)", logger.ErrorLabel, err)
 		return err
 	}
@@ -40,7 +40,7 @@ func Up(ctx context.Context, databaseURL string) error {
 		logger.Log().Error(ctx, "Fail to obtain version after migration", logger.ErrorLabel, err)
 	}
 
-	logger.Log().Info(ctx, "Applied %d version(dirty: %t)", version, dirty)
+	logger.Log().Infof(ctx, "Applied %d version(dirty: %t)", version, dirty)
 
 	return nil
 }
@@ -62,6 +62,6 @@ func CreateCleanDB(ctx context.Context, databaseURL string, migrationsURL string
 		return err
 	}
 
-	logger.Log().Info(ctx, "Applied %d version(dirty: %t)", version, dirty)
+	logger.Log().Infof(ctx, "Applied %d version(dirty: %t)", version, dirty)
 	return nil
 }

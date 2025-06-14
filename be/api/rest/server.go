@@ -39,7 +39,7 @@ func NewServer(rslvr handlers.Resolver, tokenAuth middleware.BearerTokenAuth, co
 	}
 }
 
-func (srv *Server) Run(ctx context.Context) error {
+func (srv *Server) Run(ctx context.Context) {
 	logger.Log().Infof(ctx, "Start HTTP server on: %s", srv.config.Addr)
 
 	server, err := api.NewServer(
@@ -55,8 +55,8 @@ func (srv *Server) Run(ctx context.Context) error {
 	)
 
 	if err != nil {
-		logger.Log().Fatalf(ctx, "fail to create server: {%s}", logger.ErrorLabel, err)
-		return err
+		logger.Log().Fatal(ctx, "fail to create server", logger.ErrorLabel, err)
+		return
 	}
 
 	httpServer := http.Server{
@@ -71,10 +71,12 @@ func (srv *Server) Run(ctx context.Context) error {
 
 	g.Go(func() error {
 		var shutdownReason string
+
 		select {
 		// Wait for shutdown request
 		case <-srv.shutdownChannel:
 			shutdownReason = "shutdown demand"
+			ctx.Done() // ?
 		// Wait until g ctx canceled
 		case <-ctx.Done():
 			shutdownReason = "root context cancellation"
@@ -95,10 +97,15 @@ func (srv *Server) Run(ctx context.Context) error {
 		return nil
 	})
 
-	return g.Wait()
+	if err := g.Wait(); err != nil {
+		logger.Log().Fatal(ctx, "fail to wait", logger.ErrorLabel, err)
+
+		ctx.Done()
+	}
 }
 
 func (srv *Server) Shutdown(ctx context.Context) error {
 	close(srv.shutdownChannel)
+
 	return nil
 }

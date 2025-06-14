@@ -22,7 +22,6 @@ var Cmd = cli.Command{
 	Action: run,
 }
 
-// cli.ActionFunc interface
 func run(c context.Context, cmd *cli.Command) error {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
