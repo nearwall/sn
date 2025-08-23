@@ -84,11 +84,11 @@ var cmdFlags = []cli.Flag{
 		Name:    "password-hash-algorithm-id",
 		Usage:   "password hash algorithm ID",
 		Sources: cli.EnvVars("PASSWORD_HASH_ALGORITHM_ID"),
+		Value:   255,
 	},
 	&cli.StringFlag{
 		Name:    "password-hash-pepper",
 		Usage:   "password hash pepper",
 		Sources: cli.EnvVars("PASSWORD_HASH_PEPPER"),
-		Value:   "",
 	},
 }

@@ -15,7 +15,10 @@ import (
 	"sn/api/rest/middleware"
 	"sn/internal/repository/account"
 	"sn/internal/repository/info"
-	"sn/internal/service"
+	account2 "sn/internal/service/account"
+	"sn/internal/service/auth"
+	"sn/internal/service/session"
+	"sn/internal/service/token"
 )
 
 // Injectors from wire.go:
@@ -27,12 +30,12 @@ func InitializeApplication(c *cli.Command, appCtx context.Context) (api.Containe
 	}
 	infoStore := info.NewInfoStore(client)
 	accountStore := account.NewAccountStore(client)
-	passwordServiceConfig, err := providePasswordServiceConfig(appCtx, c)
+	config, err := providePasswordServiceConfig(appCtx, c)
 	if err != nil {
 		return api.Container{}, err
 	}
-	passwordService := service.NewPasswordService(passwordServiceConfig)
-	accountService := service.NewAccountService(infoStore, accountStore, passwordService)
+	passwordService := providePasswordService(config)
+	accountService := account2.NewAccountService(infoStore, accountStore, passwordService)
 	sessionServiceConfig, err := provideSessionServiceConfig(appCtx, c)
 	if err != nil {
 		return api.Container{}, err
@@ -41,9 +44,9 @@ func InitializeApplication(c *cli.Command, appCtx context.Context) (api.Containe
 	if err != nil {
 		return api.Container{}, err
 	}
-	tokenService := service.NewTokenService(tokenServiceConfig)
-	sessionService := service.NewSessionService(sessionServiceConfig, tokenService)
-	authService := service.NewAuthService(infoStore, accountStore, passwordService, sessionService)
+	tokenService := token.NewTokenService(tokenServiceConfig)
+	sessionService := session.NewSessionService(sessionServiceConfig, tokenService)
+	authService := auth.NewAuthService(infoStore, accountStore, passwordService, sessionService)
 	resolver := handlers.NewResolver(accountService, authService)
 	bearerTokenAuth := middleware.NewBearerTokenAuth(tokenService)
 	serverConfig, err := provideRestServerConfig(appCtx, c)
